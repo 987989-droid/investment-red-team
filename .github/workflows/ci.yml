@@ -1,0 +1,28 @@
+name: CI - Tests & Zero-PII Privacy Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run unit tests
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Run zero-PII privacy-check across entire repository
+        run: python3 -m cli.privacy_check --all
+
+      - name: Smoke-test quote CLI in offline mock mode
+        run: python3 -m cli.quote_fetch --tw 2330 --us NVDA --etf 0050.TW,VOO --crypto bitcoin --mock --format markdown

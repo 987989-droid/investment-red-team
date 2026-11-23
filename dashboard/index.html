@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Investment Red-Team｜投資紅隊互動式審計儀表板</title>
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --surface: #121826;
+      --surface-2: #182133;
+      --border: #243047;
+      --text: #e6edf7;
+      --muted: #8ea0bc;
+      --accent: #ef4444;
+      --accent-soft: rgba(239, 68, 68, 0.14);
+      --green: #10b981;
+      --green-soft: rgba(16, 185, 129, 0.15);
+      --amber: #f59e0b;
+      --amber-soft: rgba(245, 158, 11, 0.15);
+      --blue: #3b82f6;
+      --blue-soft: rgba(59, 130, 246, 0.15);
+      --radius: 12px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      background: radial-gradient(circle at top right, #171e30 0%, var(--bg) 52%);
+      color: var(--text);
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 20px 24px 48px;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #dc2626, #991b1b);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-family: var(--mono);
+      font-size: 16px;
+      letter-spacing: -0.5px;
+      box-shadow: 0 6px 20px rgba(220, 38, 38, 0.35);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle {
+      margin: 2px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--green-soft);
+      color: var(--green);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    button {
+      font-family: var(--sans);
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      padding: 8px 13px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+
+    button:hover {
+      border-color: #3d5175;
+      background: #1f2b42;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    button.primary:hover {
+      background: #dc2626;
+    }
+
+    .market-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .market-tab {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      text-align: left;
+      transition: all 0.15s ease;
+    }
+
+    .market-tab.active {
+      border-color: var(--accent);
+      background: linear-gradient(180deg, rgba(239, 68, 68, 0.14), var(--surface));
+      box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.35);
+    }
+
+    .market-tab .m-title {
+      font-size: 14px;
+      font-weight: 700;
+      display: block;
+    }
+
+    .market-tab .m-sub {
+      font-size: 12px;
+      color: var(--muted);
+      display: block;
+      margin-top: 2px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(340px, 0.95fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .market-tabs { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 18px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: var(--surface-2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 640px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    label.field {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    input[type="text"], input[type="number"], select, textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 9px 11px;
+      font-size: 13px;
+      font-family: var(--sans);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 68px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--blue);
+    }
+
+    .axis-item {
+      padding: 12px 0;
+      border-top: 1px solid rgba(36, 48, 71, 0.7);
+    }
+
+    .axis-item:first-of-type { border-top: none; padding-top: 2px; }
+
+    .axis-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .axis-name {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .axis-weight {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      margin-left: 6px;
+    }
+
+    .axis-score {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 700;
+      min-width: 56px;
+      text-align: right;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .axis-note {
+      margin-top: 6px;
+      font-size: 12px;
+      padding: 6px 10px;
+    }
+
+    .check-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 9px 11px;
+      background: rgba(11, 15, 23, 0.55);
+      border: 1px solid rgba(36, 48, 71, 0.75);
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .check-item input[type="checkbox"] {
+      margin-top: 3px;
+      accent-color: var(--accent);
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+    }
+
+    .sticky-col {
+      position: sticky;
+      top: 18px;
+    }
+
+    .score-hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px;
+      border-radius: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      margin-bottom: 14px;
+    }
+
+    .score-num {
+      font-family: var(--mono);
+      font-size: 42px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .score-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .grade-box {
+      text-align: right;
+    }
+
+    .grade-pill {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 14px;
+      font-family: var(--mono);
+    }
+
+    .grade-A { background: var(--green-soft); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.45); }
+    .grade-B { background: var(--blue-soft); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.45); }
+    .grade-C { background: var(--amber-soft); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.45); }
+    .grade-D { background: var(--accent-soft); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.5); }
+
+    .alert {
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    .alert.show { display: block; }
+    .alert.danger {
+      background: var(--accent-soft);
+      border: 1px solid rgba(239, 68, 68, 0.45);
+      color: #fca5a5;
+    }
+    .alert.warn {
+      background: var(--amber-soft);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      color: #fcd34d;
+    }
+
+    .radar-wrap {
+      display: flex;
+      justify-content: center;
+      margin: 4px 0 6px;
+    }
+
+    .sizing-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .sizing-result {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      border-radius: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+    }
+
+    .sizing-val {
+      font-family: var(--mono);
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--green);
+    }
+
+    .ks-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .ks-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .ks-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      font-size: 12.5px;
+    }
+
+    .ks-del {
+      padding: 3px 8px;
+      font-size: 11px;
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.35);
+    }
+
+    .md-preview {
+      font-family: var(--mono);
+      font-size: 11.5px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      max-height: 230px;
+      overflow: auto;
+      white-space: pre-wrap;
+      color: #cbd5e1;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #10b981;
+      color: #052e16;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.2s ease;
+      pointer-events: none;
+    }
+
+    .toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo-badge">RT</div>
+        <div>
+          <h1>Investment Red-Team 互動式審計儀表板</h1>
+          <p class="subtitle">四大市場對抗式壓力測試 · 六維存活評分 · Kill-Switch 紀律閘門</p>
+        </div>
+      </div>
+      <div class="toolbar">
+        <span class="pill">● 100% 本機運作・零個資上傳</span>
+        <button id="btnDemo" type="button">載入虛構示範</button>
+        <button id="btnImport" type="button">匯入 JSON</button>
+        <input id="fileImport" type="file" accept=".json" style="display:none" />
+        <button id="btnExportJson" type="button">匯出 JSON</button>
+        <button id="btnExportMd" class="primary" type="button">下載 Markdown 報告</button>
+        <button id="btnReset" type="button">重設</button>
+      </div>
+    </header>
+
+    <section class="market-tabs" role="tablist" aria-label="市場範本切換">
+      <button class="market-tab active" data-market="tw" type="button">
+        <span class="m-title">台股（TW Stock）</span>
+        <span class="m-sub">月營收・籌碼融資・殖利率陷阱・家族治理</span>
+      </button>
+      <button class="market-tab" data-market="us" type="button">
+        <span class="m-title">美股成長股（US Growth）</span>
+        <span class="m-sub">Rule of 40・SBC 稀釋・NRR・倍數壓縮</span>
+      </button>
+      <button class="market-tab" data-market="etf" type="button">
+        <span class="m-title">ETF 配置</span>
+        <span class="m-sub">追蹤誤差・內扣費用・集中度・折溢價</span>
+      </button>
+      <button class="market-tab" data-market="crypto" type="button">
+        <span class="m-title">加密貨幣（Crypto）</span>
+        <span class="m-sub">FDV 解鎖・真實收益・合約安全・歸零風險</span>
+      </button>
+    </section>
+
+    <div class="grid">
+      <!-- Left: Inputs & Adversarial Checklists -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <h2>1. 標的與論點鋼人化（Steelman Thesis）</h2>
+            <span class="badge" id="marketBadge">TW-STOCK</span>
+          </div>
+          <div class="form-row">
+            <div>
+              <label class="field" for="ticker">標的代號</label>
+              <input id="ticker" type="text" placeholder="例：9999（公開測試請勿填私密備忘）" />
+            </div>
+            <div>
+              <label class="field" for="assetName">標的名稱</label>
+              <input id="assetName" type="text" placeholder="例：範例精密光電" />
+            </div>
+            <div>
+              <label class="field" for="stage">審計階段</label>
+              <select id="stage">
+                <option value="建倉前審查">建倉前審查</option>
+                <option value="財報／重大事件複查">財報／重大事件複查</option>
+                <option value="減碼／退出檢視">減碼／退出檢視</option>
+              </select>
+            </div>
+          </div>
+          <label class="field" for="thesis">一句話核心論點（為何市場目前錯誤定價？催化劑與週期為何？）</label>
+          <textarea id="thesis" placeholder="用 3 句話以內寫清楚可證偽的核心假設..."></textarea>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>2. 六維度紅隊壓力評分（0–100）</h2>
+            <span class="badge">任一維度 &lt; 35 觸發一票否決</span>
+          </div>
+          <div id="axesContainer"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>3. 一票否決條款（Hard Veto Check）</h2>
+            <span class="badge">命中任一項即強制評級 D</span>
+          </div>
+          <div class="check-list" id="vetoContainer">
+            <label class="check-item">
+              <input type="checkbox" class="veto-box" data-veto="財務誠信紅旗（財報重編／異常關聯交易／團隊挪用資金）" />
+              <span>存在<strong>財務或治理誠信紅旗</strong>（非無保留意見、大額關聯方異常資金流或團隊無預警倒貨）</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" class="veto-box" data-veto="無法提出明確 Kill-Switch 認錯條件" />
+              <span>目前<strong>寫不出至少 2 條可量化 Kill-Switch</strong>（偏向信仰而非可驗證論點）</span>
+            </label>
+            <label class="check-item">
+              <input type="checkbox" class="veto-box" data-veto="存在歸零或爆倉風險卻未隔離損失上限" />
+              <span>存在<strong>歸零／下市／合約被駭／高槓桿爆倉</strong>風險且未設定絕對風險隔離</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>4. 市場專屬紅隊檢查清單（已查核項目）</h2>
+            <span class="badge" id="checklistProgress">0 / 0 已查核</span>
+          </div>
+          <div class="check-list" id="marketChecklist"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>5. 認知偏誤誠實自檢</h2>
+            <span class="badge" id="biasCount">0 / 6 命中</span>
+          </div>
+          <div class="check-list" id="biasContainer"></div>
+        </div>
+      </div>
+
+      <!-- Right: Live Verdict, Radar, Position Sizing, Kill-Switch, Markdown -->
+      <div class="sticky-col">
+        <div class="card">
+          <div class="card-header">
+            <h2>紅隊存活總評（Live Verdict）</h2>
+            <span class="badge" id="auditDate"></span>
+          </div>
+
+          <div class="score-hero">
+            <div>
+              <div class="score-num" id="totalScore">68.0</div>
+              <div class="score-label">加權紅隊存活分數（滿分 100）</div>
+            </div>
+            <div class="grade-box">
+              <span class="grade-pill grade-B" id="gradePill">B｜有條件通過</span>
+              <div class="score-label" id="gradeAction">允許小倉位試單</div>
+            </div>
+          </div>
+
+          <div id="vetoAlert" class="alert danger"></div>
+          <div id="biasAlert" class="alert warn"></div>
+
+          <div class="radar-wrap">
+            <svg id="radarSvg" width="320" height="275" viewBox="0 0 320 275" aria-label="六維度紅隊雷達圖"></svg>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>紀律倉位上限計算器（僅用百分比，零金額個資）</h2>
+            <span class="badge">Risk Budget</span>
+          </div>
+          <div class="sizing-grid">
+            <div>
+              <label class="field" for="riskBudget">單筆最大可承受組合虧損 (%)</label>
+              <input id="riskBudget" type="number" min="0.2" max="10" step="0.2" value="1.5" />
+            </div>
+            <div>
+              <label class="field" for="stopLoss">論點失效預估最大回撤 (%)</label>
+              <input id="stopLoss" type="number" min="5" max="100" step="1" value="25" />
+            </div>
+          </div>
+          <div class="sizing-result">
+            <div>
+              <div style="font-size:13px;font-weight:700;">紅隊閘門後建議上限</div>
+              <div style="font-size:11.5px;color:var(--muted);" id="sizingHint">受評級 B 上限（6%）與風險預算共同約束</div>
+            </div>
+            <div class="sizing-val" id="maxAlloc">6.0%</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>Kill-Switch 論點失效觸發器</h2>
+            <span class="badge" id="ksCount">0 條</span>
+          </div>
+          <div class="ks-row">
+            <input id="ksInput" type="text" placeholder="輸入具體量化失效條件（例：連2季毛利率 < 28%）" />
+            <button id="btnAddKs" type="button">新增</button>
+          </div>
+          <ul class="ks-list" id="ksList"></ul>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>Markdown 審計報告預覽</h2>
+            <button id="btnCopyMd" type="button">複製 Markdown</button>
+          </div>
+          <div class="md-preview" id="mdPreview"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">已複製到剪貼簿</div>
+
+  <script>
+    const MARKET_CONFIG = {
+      tw: {
+        badge: "TW-STOCK",
+        label: "台股",
+        axes: [
+          { key: "moat", name: "商業模式與護城河", weight: 0.20, short: "護城河" },
+          { key: "fin", name: "財務品質與現金流", weight: 0.20, short: "財務品質" },
+          { key: "val", name: "估值與安全邊際", weight: 0.20, short: "估值邊際" },
+          { key: "struct", name: "市場結構與籌碼融資", weight: 0.15, short: "籌碼結構" },
+          { key: "gov", name: "公司治理與匯率／地緣", weight: 0.15, short: "治理風險" },
+          { key: "exit", name: "論點可證偽與退出清晰度", weight: 0.10, short: "可證偽度" }
+        ],
+        checklist: [
+          "已核對近 3 個月月營收 YoY / MoM 是否鈍化或僅靠低基期",
+          "已檢查近 4 季 OCF / 稅後淨利是否 >= 0.8，非一次性業外獲利",
+          "已排除「高殖利率循環高點陷阱」與資本公積配息幻覺",
+          "已確認董監持股、設質比率及可轉債（CB）稀釋賣壓",
+          "已檢查融資餘額與三大法人動向，未陷入散戶極度擁擠區"
+        ],
+        defaultKs: [
+          "連續 2 個月累計營收 YoY 跌破核心假設下緣",
+          "單季毛利率低於設定紅線，或營業現金流轉負且存貨季增 > 25%"
+        ]
+      },
+      us: {
+        badge: "US-GROWTH",
+        label: "美股成長股",
+        axes: [
+          { key: "moat", name: "成長引擎與護城河", weight: 0.20, short: "護城河" },
+          { key: "fin", name: "財務品質與 SBC 稀釋", weight: 0.20, short: "財務/SBC" },
+          { key: "val", name: "估值倍數與安全邊際", weight: 0.20, short: "估值邊際" },
+          { key: "struct", name: "籌碼擁擠與內部人交易", weight: 0.15, short: "籌碼結構" },
+          { key: "gov", name: "資本配置與巨頭競爭風險", weight: 0.15, short: "競爭/治理" },
+          { key: "exit", name: "關鍵 KPI 可證偽度", weight: 0.10, short: "可證偽度" }
+        ],
+        checklist: [
+          "已計算 Rule of 40（營收 YoY% + FCF Margin%）並評估續航力",
+          "已扣除 SBC（股權激勵）檢視真實 GAAP 獲利與年均股數稀釋率",
+          "已檢視 NRR（淨收入留存率）與大客戶／科技巨頭內建取代風險",
+          "已完成逆向 DCF／倍數壓縮 30% 壓力測試",
+          "已查閱 Form 4 內部人交易，確認無異常非計畫性拋售"
+        ],
+        defaultKs: [
+          "連續 2 季營收增速跌破目標區間，且 RPO / Billings 同步放緩",
+          "SBC 佔營收比重高於 20% 且無收斂趨勢，或 NRR 跌破 105%"
+        ]
+      },
+      etf: {
+        badge: "ETF",
+        label: "ETF",
+        axes: [
+          { key: "moat", name: "指數編製與長期邏輯", weight: 0.20, short: "指數邏輯" },
+          { key: "fin", name: "內扣費用與追蹤品質", weight: 0.20, short: "費用追蹤" },
+          { key: "val", name: "估值位階與安全邊際", weight: 0.20, short: "估值位階" },
+          { key: "struct", name: "規模、流動性與折溢價", weight: 0.15, short: "流動折溢" },
+          { key: "gov", name: "分散度與稅務／匯率結構", weight: 0.15, short: "分散稅務" },
+          { key: "exit", name: "替代性與再平衡規則", weight: 0.10, short: "紀律規則" }
+        ],
+        checklist: [
+          "已確認真實總費用率（TER）與高換股週轉率是否侵蝕複利",
+          "已核對近 3 年含息總報酬與基準指數的追蹤偏離度",
+          "已檢查前十大成分股權重及與現有持股的重疊度（避免假分散）",
+          "已排除高股息平準金／左手換右手幻覺，改以總報酬評估",
+          "已確認目前市價折溢價 < 1% 且已計入股息預扣稅與匯率成本"
+        ],
+        defaultKs: [
+          "指數編製規則重大變更偏離原定位，或連續 2 年落後基準超過 1.5%",
+          "市場出現追蹤相同指數、流動性佳且費用率低於一半的更優替代品"
+        ]
+      },
+      crypto: {
+        badge: "CRYPTO",
+        label: "加密貨幣",
+        axes: [
+          { key: "moat", name: "協議需求與價值捕獲", weight: 0.20, short: "價值捕獲" },
+          { key: "fin", name: "代幣經濟與真實收入", weight: 0.20, short: "代幣經濟" },
+          { key: "val", name: "FDV 估值與安全邊際", weight: 0.20, short: "FDV估值" },
+          { key: "struct", name: "籌碼分佈、解鎖與流動性", weight: 0.15, short: "解鎖籌碼" },
+          { key: "gov", name: "合約審計、託管與監管", weight: 0.15, short: "安全監管" },
+          { key: "exit", name: "鏈上指標可證偽與退出", weight: 0.10, short: "可證偽度" }
+        ],
+        checklist: [
+          "已核對流通市值 vs FDV，排除低流通高 FDV 的 VC 倒貨結構",
+          "已檢查未來 12 個月代幣解鎖排程與拋壓比例",
+          "已區分真實協議手續費收入（Real Yield）與通膨印幣補貼",
+          "已檢視智能合約審計、Admin Key 多簽風險與自託管冷錢包方案",
+          "已確認即使歸零也不影響生活，且無高倍槓桿強平風險"
+        ],
+        defaultKs: [
+          "協議 30 日真實手續費收入較高點下跌 > 60% 且連續 2 個月無回升",
+          "發生智能合約安全漏洞、團隊異常轉移國庫代幣或主流交易所下架預警"
+        ]
+      }
+    };
+
+    const BIASES = [
+      "確認偏誤：我是否只挑看多文章讀，還沒認真看過兩篇空頭反駁？",
+      "錯失恐懼（FOMO）：我是不是因為最近大漲才急著進場？",
+      "錨定效應：我是不是只因「從高點腰斬」就認定現在很便宜？",
+      "沉沒成本：若今天手上 100% 是現金，我真的會用現價買它嗎？",
+      "敘事謬誤：抽掉熱門故事後，近 8 季真實現金流與基本面還站得住腳嗎？",
+      "從眾效應：我是否過度依賴社群熱度或意見領袖的背書？"
+    ];
+
+    const state = {
+      market: "tw",
+      ticker: "",
+      assetName: "",
+      stage: "建倉前審查",
+      thesis: "",
+      scores: { moat: 70, fin: 72, val: 65, struct: 64, gov: 70, exit: 75 },
+      notes: { moat: "", fin: "", val: "", struct: "", gov: "", exit: "" },
+      vetos: [false, false, false],
+      checkedMarket: {},
+      checkedBiases: [false, false, false, false, false, false],
+      killSwitches: [...MARKET_CONFIG.tw.defaultKs],
+      riskBudget: 1.5,
+      stopLoss: 25
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function todayISO() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function showToast(msg) {
+      const el = $("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      setTimeout(() => el.classList.remove("show"), 2200);
+    }
+
+    function renderAxes() {
+      const cfg = MARKET_CONFIG[state.market];
+      $("marketBadge").textContent = cfg.badge;
+      const container = $("axesContainer");
+      container.innerHTML = "";
+      cfg.axes.forEach((ax) => {
+        const val = state.scores[ax.key];
+        const color = val >= 75 ? "#10b981" : val >= 55 ? "#60a5fa" : val >= 35 ? "#f59e0b" : "#f87171";
+        const div = document.createElement("div");
+        div.className = "axis-item";
+        div.innerHTML = `
+          <div class="axis-top">
+            <div>
+              <span class="axis-name">${ax.name}</span>
+              <span class="axis-weight">${Math.round(ax.weight * 100)}%</span>
+            </div>
+            <span class="axis-score" id="score_${ax.key}" style="color:${color}">${val} / 100</span>
+          </div>
+          <input type="range" min="0" max="100" value="${val}" data-axis="${ax.key}" />
+          <input type="text" class="axis-note" data-note="${ax.key}" value="${escapeHtml(state.notes[ax.key] || "")}" placeholder="扣分理由／關鍵風險證據（選填）" />
+        `;
+        container.appendChild(div);
+      });
+
+      container.querySelectorAll('input[type="range"]').forEach((slider) => {
+        slider.addEventListener("input", (e) => {
+          const k = e.target.dataset.axis;
+          const v = Number(e.target.value);
+          state.scores[k] = v;
+          const lbl = $(`score_${k}`);
+          lbl.textContent = `${v} / 100`;
+          lbl.style.color = v >= 75 ? "#10b981" : v >= 55 ? "#60a5fa" : v >= 35 ? "#f59e0b" : "#f87171";
+          updateSummary();
+        });
+      });
+
+      container.querySelectorAll('input[data-note]').forEach((inp) => {
+        inp.addEventListener("input", (e) => {
+          state.notes[e.target.dataset.note] = e.target.value;
+          updateMarkdown();
+        });
+      });
+    }
+
+    function renderMarketChecklist() {
+      const cfg = MARKET_CONFIG[state.market];
+      if (!state.checkedMarket[state.market]) {
+        state.checkedMarket[state.market] = cfg.checklist.map(() => false);
+      }
+      const flags = state.checkedMarket[state.market];
+      const box = $("marketChecklist");
+      box.innerHTML = "";
+      cfg.checklist.forEach((txt, idx) => {
+        const lbl = document.createElement("label");
+        lbl.className = "check-item";
+        lbl.innerHTML = `<input type="checkbox" ${flags[idx] ? "checked" : ""} data-mchk="${idx}" /><span>${txt}</span>`;
+        box.appendChild(lbl);
+      });
+      box.querySelectorAll('input[data-mchk]').forEach((cb) => {
+        cb.addEventListener("change", (e) => {
+          flags[Number(e.target.dataset.mchk)] = e.target.checked;
+          updateChecklistBadge();
+          updateMarkdown();
+        });
+      });
+      updateChecklistBadge();
+    }
+
+    function updateChecklistBadge() {
+      const flags = state.checkedMarket[state.market] || [];
+      const done = flags.filter(Boolean).length;
+      $("checklistProgress").textContent = `${done} / ${flags.length} 已查核`;
+    }
+
+    function renderBiases() {
+      const box = $("biasContainer");
+      box.innerHTML = "";
+      BIASES.forEach((txt, idx) => {
+        const lbl = document.createElement("label");
+        lbl.className = "check-item";
+        lbl.innerHTML = `<input type="checkbox" ${state.checkedBiases[idx] ? "checked" : ""} data-bias="${idx}" /><span>${txt}</span>`;
+        box.appendChild(lbl);
+      });
+      box.querySelectorAll('input[data-bias]').forEach((cb) => {
+        cb.addEventListener("change", (e) => {
+          state.checkedBiases[Number(e.target.dataset.bias)] = e.target.checked;
+          updateSummary();
+        });
+      });
+    }
+
+    function renderKillSwitches() {
+      const list = $("ksList");
+      list.innerHTML = "";
+      state.killSwitches.forEach((ks, idx) => {
+        const li = document.createElement("li");
+        li.className = "ks-item";
+        li.innerHTML = `<span>${idx + 1}. ${escapeHtml(ks)}</span><button type="button" class="ks-del" data-del="${idx}">移除</button>`;
+        list.appendChild(li);
+      });
+      $("ksCount").textContent = `${state.killSwitches.length} 條`;
+      list.querySelectorAll("button[data-del]").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          state.killSwitches.splice(Number(e.target.dataset.del), 1);
+          renderKillSwitches();
+          updateSummary();
+        });
+      });
+    }
+
+    function computeEvaluation() {
+      const cfg = MARKET_CONFIG[state.market];
+      let weighted = 0;
+      const lowAxes = [];
+      cfg.axes.forEach((ax) => {
+        const s = state.scores[ax.key];
+        weighted += s * ax.weight;
+        if (s < 35) lowAxes.push(`${ax.name}(${s})`);
+      });
+      weighted = Math.round(weighted * 10) / 10;
+
+      const vetoReasons = [];
+      document.querySelectorAll(".veto-box").forEach((cb, i) => {
+        state.vetos[i] = cb.checked;
+        if (cb.checked) vetoReasons.push(cb.dataset.veto);
+      });
+      if (lowAxes.length > 0) {
+        vetoReasons.push(`單一維度崩潰 (< 35 分)：${lowAxes.join("、")}`);
+      }
+      if (state.killSwitches.length < 2) {
+        vetoReasons.push("Kill-Switch 少於 2 條（建議至少補齊 2 條可量化失效條件）");
+      }
+
+      const hardVeto = state.vetos.some(Boolean) || lowAxes.length > 0;
+      let grade = "D";
+      let pillText = "D｜紅隊否決";
+      let actionText = "禁止建倉（存在致命破口）";
+      let gradeCap = 0;
+
+      if (!hardVeto) {
+        if (weighted >= 80) {
+          grade = "A"; pillText = "A｜高抗壓通過"; actionText = "可按紀律分批建倉（核心候選）"; gradeCap = 12;
+        } else if (weighted >= 65) {
+          grade = "B"; pillText = "B｜有條件通過"; actionText = "允許小倉位試單，盯緊弱項預警"; gradeCap = 6;
+        } else if (weighted >= 50) {
+          grade = "C"; pillText = "C｜警戒觀察"; actionText = "禁止建倉，僅列入觀察名單"; gradeCap = 0;
+        }
+      }
+
+      const biasHits = state.checkedBiases.filter(Boolean).length;
+      const riskRaw = state.stopLoss > 0 ? (state.riskBudget / state.stopLoss) * 100 : 0;
+      const finalAlloc = gradeCap === 0 ? 0 : Math.min(gradeCap, Math.round(riskRaw * 10) / 10);
+
+      return { weighted, hardVeto, vetoReasons, grade, pillText, actionText, gradeCap, biasHits, finalAlloc };
+    }
+
+    function drawRadar() {
+      const cfg = MARKET_CONFIG[state.market];
+      const svg = $("radarSvg");
+      const cx = 160, cy = 138, r = 92;
+      const n = cfg.axes.length;
+
+      function polar(angleIdx, ratio) {
+        const ang = (-Math.PI / 2) + (angleIdx * 2 * Math.PI) / n;
+        return [cx + Math.cos(ang) * r * ratio, cy + Math.sin(ang) * r * ratio];
+      }
+
+      let html = "";
+      [0.25, 0.5, 0.75, 1.0].forEach((ring) => {
+        const pts = cfg.axes.map((_, i) => polar(i, ring).join(",")).join(" ");
+        html += `<polygon points="${pts}" fill="none" stroke="#243047" stroke-width="1" />`;
+      });
+
+      // 35-point danger ring
+      const dangerPts = cfg.axes.map((_, i) => polar(i, 0.35).join(",")).join(" ");
+      html += `<polygon points="${dangerPts}" fill="none" stroke="rgba(239,68,68,0.45)" stroke-dasharray="4 3" stroke-width="1.2" />`;
+
+      cfg.axes.forEach((ax, i) => {
+        const [x2, y2] = polar(i, 1.0);
+        html += `<line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="#243047" stroke-width="1" />`;
+        const [lx, ly] = polar(i, 1.24);
+        html += `<text x="${lx}" y="${ly}" fill="#9fb0cc" font-size="11" font-weight="600" text-anchor="middle" dominant-baseline="middle">${ax.short}</text>`;
+      });
+
+      const valPts = cfg.axes.map((ax, i) => polar(i, state.scores[ax.key] / 100).join(",")).join(" ");
+      html += `<polygon points="${valPts}" fill="rgba(239,68,68,0.25)" stroke="#ef4444" stroke-width="2.2" />`;
+
+      cfg.axes.forEach((ax, i) => {
+        const [px, py] = polar(i, state.scores[ax.key] / 100);
+        const dotColor = state.scores[ax.key] < 35 ? "#f87171" : "#f8fafc";
+        html += `<circle cx="${px}" cy="${py}" r="3.6" fill="${dotColor}" stroke="#ef4444" stroke-width="1.5" />`;
+      });
+
+      svg.innerHTML = html;
+    }
+
+    function buildMarkdown(ev) {
+      const cfg = MARKET_CONFIG[state.market];
+      const sym = state.ticker.trim() || "<TICKER>";
+      const name = state.assetName.trim() || "<標的名稱>";
+      const flags = state.checkedMarket[state.market] || [];
+      const rows = cfg.axes.map((ax) =>
+        `| ${ax.name} | ${Math.round(ax.weight * 100)}% | ${state.scores[ax.key]} | ${state.notes[ax.key] || "-"} |`
+      ).join("\n");
+      const checks = cfg.checklist.map((t, i) => `- [${flags[i] ? "x" : " "}] ${t}`).join("\n");
+      const ksLines = state.killSwitches.length
+        ? state.killSwitches.map((k, i) => `${i + 1}. ${k}`).join("\n")
+        : "1. （尚未填寫，請務必補齊至少 2 條）";
+
+      return `# [${cfg.label}紅隊審計] ${sym} ${name}
+
+- **審計日期**：\`${todayISO()}\`
+- **市場類別**：${cfg.label}（\`${cfg.badge}\`）
+- **審計階段**：${state.stage}
+- **紅隊存活分數**：**${ev.weighted} / 100**（評級：**${ev.pillText}**）
+- **紀律倉位上限**：**${ev.finalAlloc.toFixed(1)}%**（單筆風險預算 ${state.riskBudget}% / 失效預估回撤 ${state.stopLoss}%）
+
+## 1. 核心論點（Steelman Thesis）
+${state.thesis.trim() || "（尚未填寫）"}
+
+## 2. 六維度紅隊評分
+| 維度 | 權重 | 分數 | 扣分理由／風險證據 |
+| :--- | :---: | :---: | :--- |
+${rows}
+
+## 3. 市場專屬紅隊檢查清單
+${checks}
+
+## 4. 不可妥協的 Kill-Switch
+${ksLines}
+
+## 5. 風控與偏誤檢核
+- **一票否決狀態**：${ev.hardVeto ? "觸發否決 — " + ev.vetoReasons.join("；") : "通過（無命中一票否決）"}
+- **認知偏誤命中數**：${ev.biasHits} / ${BIASES.length}${ev.biasHits >= 3 ? "（⚠️ 觸發 48 小時冷靜期）" : ""}
+- **最終建議行動**：${ev.actionText}
+`;
+    }
+
+    function updateSummary() {
+      const ev = computeEvaluation();
+      $("totalScore").textContent = ev.weighted.toFixed(1);
+      const pill = $("gradePill");
+      pill.textContent = ev.pillText;
+      pill.className = `grade-pill grade-${ev.grade}`;
+      $("gradeAction").textContent = ev.actionText;
+
+      const vetoAlert = $("vetoAlert");
+      if (ev.hardVeto) {
+        vetoAlert.innerHTML = `<strong>⛔ 觸發一票否決：</strong>${ev.vetoReasons.join("；")}`;
+        vetoAlert.classList.add("show");
+      } else if (state.killSwitches.length < 2) {
+        vetoAlert.innerHTML = `<strong>⚠️ 提醒：</strong>建議至少設定 2 條可量化的 Kill-Switch 失效條件。`;
+        vetoAlert.classList.add("show");
+      } else {
+        vetoAlert.classList.remove("show");
+      }
+
+      $("biasCount").textContent = `${ev.biasHits} / ${BIASES.length} 命中`;
+      const biasAlert = $("biasAlert");
+      if (ev.biasHits >= 3) {
+        biasAlert.innerHTML = `<strong>🧊 啟動 48 小時冷靜期：</strong>你勾選了 ${ev.biasHits} 項認知偏誤，建議暫緩下單並尋找反方資料覆核。`;
+        biasAlert.classList.add("show");
+      } else {
+        biasAlert.classList.remove("show");
+      }
+
+      $("maxAlloc").textContent = `${ev.finalAlloc.toFixed(1)}%`;
+      $("maxAlloc").style.color = ev.finalAlloc > 0 ? "#10b981" : "#f87171";
+      $("sizingHint").textContent = ev.gradeCap === 0
+        ? `目前評級 ${ev.grade} 強制鎖定上限 0%（禁止建倉）`
+        : `評級 ${ev.grade} 上限 ${ev.gradeCap}% 與風險預算推算 ${((state.riskBudget / state.stopLoss) * 100).toFixed(1)}% 取較小值`;
+
+      drawRadar();
+      updateMarkdown(ev);
+    }
+
+    function updateMarkdown(ev) {
+      const evaluated = ev || computeEvaluation();
+      $("mdPreview").textContent = buildMarkdown(evaluated);
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, (ch) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[ch]));
+    }
+
+    // Event bindings
+    document.querySelectorAll(".market-tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".market-tab").forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+        state.market = tab.dataset.market;
+        state.killSwitches = [...MARKET_CONFIG[state.market].defaultKs];
+        renderAxes();
+        renderMarketChecklist();
+        renderKillSwitches();
+        updateSummary();
+      });
+    });
+
+    $("ticker").addEventListener("input", (e) => { state.ticker = e.target.value; updateMarkdown(); });
+    $("assetName").addEventListener("input", (e) => { state.assetName = e.target.value; updateMarkdown(); });
+    $("stage").addEventListener("change", (e) => { state.stage = e.target.value; updateMarkdown(); });
+    $("thesis").addEventListener("input", (e) => { state.thesis = e.target.value; updateMarkdown(); });
+    $("riskBudget").addEventListener("input", (e) => { state.riskBudget = Math.max(0.1, Number(e.target.value) || 0.1); updateSummary(); });
+    $("stopLoss").addEventListener("input", (e) => { state.stopLoss = Math.max(1, Number(e.target.value) || 1); updateSummary(); });
+
+    document.querySelectorAll(".veto-box").forEach((cb) => cb.addEventListener("change", updateSummary));
+
+    $("btnAddKs").addEventListener("click", () => {
+      const val = $("ksInput").value.trim();
+      if (!val) return;
+      state.killSwitches.push(val);
+      $("ksInput").value = "";
+      renderKillSwitches();
+      updateSummary();
+    });
+
+    $("ksInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); $("btnAddKs").click(); }
+    });
+
+    $("btnCopyMd").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText($("mdPreview").textContent);
+        showToast("已複製 Markdown 報告到剪貼簿");
+      } catch {
+        showToast("請手動選取預覽區塊複製");
+      }
+    });
+
+    $("btnExportMd").addEventListener("click", () => {
+      const sym = (state.ticker.trim() || "redteam-case").replace(/[^a-zA-Z0-9._-]/g, "_");
+      downloadFile(`${todayISO()}-${sym}-redteam.md`, $("mdPreview").textContent, "text/markdown;charset=utf-8");
+      showToast("已下載 Markdown 紅隊報告");
+    });
+
+    $("btnExportJson").addEventListener("click", () => {
+      const sym = (state.ticker.trim() || "redteam-case").replace(/[^a-zA-Z0-9._-]/g, "_");
+      downloadFile(`${todayISO()}-${sym}-redteam.json`, JSON.stringify(state, null, 2), "application/json;charset=utf-8");
+      showToast("已匯出 JSON 狀態檔");
+    });
+
+    $("btnImport").addEventListener("click", () => $("fileImport").click());
+    $("fileImport").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          Object.assign(state, parsed);
+          syncUIFromState();
+          showToast("已匯入 JSON 審計紀錄");
+        } catch {
+          showToast("JSON 格式無效");
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = "";
+    });
+
+    $("btnDemo").addEventListener("click", () => {
+      state.market = "tw";
+      state.ticker = "9999";
+      state.assetName = "範例精密光電（虛構示範）";
+      state.stage = "建倉前審查";
+      state.thesis = "高速光通訊升級週期帶動高毛利模組放量，預期未來 6 季毛利率由 28% 擴張至 34%，但需嚴防大客戶資本支出遞延與高檔籌碼反轉。";
+      state.scores = { moat: 72, fin: 78, val: 42, struct: 48, gov: 75, exit: 85 };
+      state.notes = {
+        moat: "技術門檻中上，但前兩大客戶佔比 62%",
+        fin: "OCF 穩健但資本支出爬升",
+        val: "本益比位於近五年 92 百分位，容錯率低",
+        struct: "近 20 日融資餘額大增 38%，籌碼偏熱",
+        gov: "管理層過往指引可信度佳，須留意匯率",
+        exit: "月營收透明，流動性充裕"
+      };
+      state.vetos = [false, false, false];
+      state.checkedBiases = [false, true, false, false, false, false];
+      state.killSwitches = [
+        "連續 2 個月累計營收 YoY 低於 15%",
+        "單季毛利率跌破 27% 或大客戶導入新競品瓜分份額",
+        "持有滿 4 季新產品線營收占比仍低於 20%"
+      ];
+      syncUIFromState();
+      showToast("已載入虛構示範案例（零個資）");
+    });
+
+    $("btnReset").addEventListener("click", () => {
+      state.ticker = "";
+      state.assetName = "";
+      state.thesis = "";
+      state.scores = { moat: 70, fin: 70, val: 65, struct: 65, gov: 70, exit: 75 };
+      state.notes = { moat: "", fin: "", val: "", struct: "", gov: "", exit: "" };
+      state.vetos = [false, false, false];
+      state.checkedBiases = BIASES.map(() => false);
+      state.killSwitches = [...MARKET_CONFIG[state.market].defaultKs];
+      syncUIFromState();
+      showToast("已重設表單");
+    });
+
+    function syncUIFromState() {
+      document.querySelectorAll(".market-tab").forEach((t) => {
+        t.classList.toggle("active", t.dataset.market === state.market);
+      });
+      $("ticker").value = state.ticker || "";
+      $("assetName").value = state.assetName || "";
+      $("stage").value = state.stage || "建倉前審查";
+      $("thesis").value = state.thesis || "";
+      $("riskBudget").value = state.riskBudget;
+      $("stopLoss").value = state.stopLoss;
+      document.querySelectorAll(".veto-box").forEach((cb, i) => { cb.checked = Boolean(state.vetos[i]); });
+      renderAxes();
+      renderMarketChecklist();
+      renderBiases();
+      renderKillSwitches();
+      updateSummary();
+    }
+
+    function downloadFile(filename, content, mime) {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    // Init
+    $("auditDate").textContent = todayISO();
+    syncUIFromState();
+  </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Personal / Private Data Guardrails (NEVER commit to public repo)
+my-cases/
+holdings/
+portfolio/
+reviews/
+*.holdings.*
+*.statement.*
+*.local.json
+*.private.md
+.env
+.env.*
+
+# OS & Editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
