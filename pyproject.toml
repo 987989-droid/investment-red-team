@@ -14,6 +14,7 @@ dependencies = []
 [project.scripts]
 irt-quote = "cli.quote_fetch:main"
 irt-privacy = "cli.privacy_check:main"
+irt-notify = "cli.email_digest:main"
 
 [tool.setuptools.packages.find]
 include = ["cli*"]

@@ -83,7 +83,17 @@ bash scripts/install-hooks.sh
 python3 -m http.server 8080 --directory dashboard
 ```
 
-### 4. 執行單元測試
+### 4. 產生分析摘要與 Email 推播（`cli/email_digest.py`）
+```bash
+# 離線預覽報告（不實際寄信，可同時輸出 HTML 預覽檔）
+python3 -m cli.email_digest --cases-dir examples --tw 2330 --us NVDA --mock --dry-run --out-html /tmp/digest.html
+
+# 透過環境變數寄送至指定 Email（建議搭配私有倉庫的 GitHub Actions Secrets 使用，切勿寫死密碼）
+SMTP_USER="you@example.com" SMTP_PASS="<APP_PASSWORD>" NOTIFY_EMAIL_TO="you@example.com" \
+  python3 -m cli.email_digest --cases-dir ../investment-red-team-private/my-cases --tw 2330 --us NVDA
+```
+
+### 5. 執行單元測試
 ```bash
 python3 -m unittest discover -s tests -v
 ```
