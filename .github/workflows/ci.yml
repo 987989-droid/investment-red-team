@@ -29,3 +29,6 @@ jobs:
 
       - name: Smoke-test email digest CLI in dry-run mock mode
         run: python3 -m cli.email_digest --cases-dir examples --tw 2330 --us NVDA --mock --dry-run
+
+      - name: Smoke-test v2 market_intel (Technical + Trusted News) CLI in mock mode
+        run: python3 -m cli.market_intel --tw 2330 --us NVDA --etf VOO --mock

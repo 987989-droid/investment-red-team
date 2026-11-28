@@ -93,7 +93,14 @@ SMTP_USER="you@example.com" SMTP_PASS="<APP_PASSWORD>" NOTIFY_EMAIL_TO="you@exam
   python3 -m cli.email_digest --cases-dir ../investment-red-team-private/my-cases --tw 2330 --us NVDA
 ```
 
-### 5. 執行單元測試
+### 5. v2 技術線型 + 可信新聞事件雷達（`cli/market_intel.py`）
+針對「季報創高卻因突發治理／政策新聞重挫、反轉時暴漲並波及台股供應鏈」的情境，自動計算 MA20/MA60/MA200、RSI14、20 日回撤、量比與跳空缺口，並僅採信 Tier-1／Tier-2 可信新聞來源，輸出統一的 `00_context_packet.md` 與動態權重（詳細架構見 [`framework/V2_EVENT_TECH_ARCHITECTURE.md`](./framework/V2_EVENT_TECH_ARCHITECTURE.md)）：
+```bash
+python3 -m cli.market_intel --us NVDA --tw 2330,2382 --etf 0050,VOO --out-md 00_context_packet.md
+```
+另提供免費 Google 小程式腳本 [`integrations/google_apps_script_news_watcher.gs`](./integrations/google_apps_script_news_watcher.gs)，可貼至 Google Apps Script 每小時自動監控可信新聞、同步寫入 Google Drive 並在命中重大事件時立即寄送 Gmail 警示。
+
+### 6. 執行單元測試
 ```bash
 python3 -m unittest discover -s tests -v
 ```
